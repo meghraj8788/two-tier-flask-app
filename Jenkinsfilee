@@ -1,0 +1,33 @@
+pipeline{
+    agent {label 'jenkins-agent'};
+    stages{
+        stage("git clone"){
+            steps{
+                git url: "https://github.com/meghraj8788/two-tier-flask-app.git" , branch : "master"
+            }
+        }
+        stage("build Image"){
+            steps{
+                sh "docker build -t meghrajfand8788/two-tier-flask-app:latest ."
+            }
+        }
+        stage("push image o docker"){
+            steps{
+                withCredentials([usernamePassword(
+                    credentialsId : "dockerhub",
+                    passwordVariable: "dockerpass",
+                    usernameVariable : "dockeruser"
+                    )]){
+                        sh "docker login -u ${env.dockeruser} -p ${env.dockerpass}"
+                        sh "docker push ${env.dockeruser}/two-tier-flask-app:latest"
+                        
+                    }
+            }
+        }
+        stage("Container"){
+            steps{
+                sh "docker compose up -d flask-app"
+            }
+        }
+    }
+}
